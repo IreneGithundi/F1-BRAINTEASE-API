@@ -1,0 +1,30 @@
+###Testing SignUp
+POST http://127.0.0.1:8000/api/auth/signup/
+Content-Type: application/json
+
+{
+    "username": "max6_fan",
+    "password": "F1password123!",
+    "email": "max6@example.com"
+}
+
+###Testing Login
+POST http://127.0.0.1:8000/api/auth/login/
+Content-Type: application/json
+
+{
+    "username": "max6_fan",
+    "password": "F1password123!"
+}
+
+###Testing Token Authentication Generation
+GET http://127.0.0.1:8000/api/auth/test_token/
+Authorization: Token 5ba52ee4d3bc8f5306687769ec833265aba39571
+
+###Testing Logout
+POST http://127.0.0.1:8000/api/auth/logout/
+Authorization: Token 
+
+###Verifying Logout
+GET http://127.0.0.1:8000/api/auth/test_token/
+Authorization: Token 
