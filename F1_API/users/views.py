@@ -1,50 +1,31 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, views, permissions
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.authentication import TokenAuthentication
-from .serializers import UserSerializer
-from .models import User
-from django.contrib.auth import authenticate
-from django.contrib.auth import get_user_model
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from .serializers import RegisterSerializer, LoginSerializer, LogoutSerializer
 
-
-User = get_user_model()
-#User SIGN-UP
-class SignupView(generics.CreateAPIView):
-    permission_classes = [AllowAny]
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+class RegisterView(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+    def post(self, request):
+        user=request.data
+        serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+        serializer.save()
+        user_data = serializer.data
+        return Response(user_data, status=status.HTTP_201_CREATED)
     
-
-#Login
-class LoginView(APIView):
-    permission_classes = [AllowAny]
+class LoginAPIView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
     def post(self, request):
-        user = request.data.get('username')
-        password = request.data.get('password')
-
-        user = authenticate(username=user, password=password)
-
-        if not user:
-            return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
-        token, created = Token.objects.get_or_create(user=user)
-        serialzer = UserSerializer(instance=user)
-        return Response({'token': token.key, 'user': serialzer.data})
-
-class LogoutView(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
+class LogoutAPIView(generics.GenericAPIView):
+    serializer_class = LogoutSerializer
+    permission_classes = (permissions.IsAuthenticated,)
     def post(self, request):
-        request.user.auth_token.delete()
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
