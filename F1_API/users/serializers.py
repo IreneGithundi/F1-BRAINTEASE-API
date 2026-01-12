@@ -16,7 +16,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         username = attrs.get('username', '')
 
         if not username.isalnum():
-            raise serializers.ValidationError(self.default_error_messages)
+            raise serializers.ValidationError({
+                "username": "The username should only contain alphanumeric characters"
+            })
+        
+        banned_words = ['admin', 'official', 'f1admin', 'f1official', 'moderator']
+        if any(word in username.lower() for word in banned_words):
+            raise serializers.ValidationError({
+                'username': 'This username is not allowed'
+            })
         return attrs
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
@@ -47,6 +55,9 @@ class LoginSerializer(serializers.ModelSerializer):
         if not user.is_active:
             raise AuthenticationFailed('Account disabled, contact admin')
         
+        # For AutoLogin
+        tokens = user.tokens()
+
         return {
             'email': user.email,
             'username': user.username,
